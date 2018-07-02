@@ -10,7 +10,6 @@ SERVICE_ACCOUNT_NAME="myservice3"
 USER_NAME="myservice3-user"
 CONTEXT_NAME="myservice3-context"
 
-
 if [ ! -d "~/tmp" ]; then
 	echo "[*] Creating ~/tmp folder"
 	mkdir ~/tmp
@@ -64,7 +63,6 @@ roleRef:
 EOF
 kubectl create -f ~/tmp/RoleBinding.yaml
 
-
 SECRET_NAME=`kubectl get serviceaccounts $SERVICE_ACCOUNT_NAME -o json | jq -r '.secrets[].name'`
 TOKEN=`kubectl get secrets $SECRET_NAME -o json | jq -r '.data | .token' | base64 -d`
 
@@ -77,7 +75,6 @@ kubectl config set-context $CONTEXT_NAME \
 --cluster=kubernetes \
 --namespace=default \
 --user=$USER_NAME
-
 
 echo "[*] Trying: \"kubectl get pods --context=$CONTEXT_NAME\""
 kubectl get pods --context=$CONTEXT_NAME
