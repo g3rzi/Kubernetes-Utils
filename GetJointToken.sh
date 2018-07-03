@@ -1,6 +1,6 @@
 # The adapter name can different, like 'ens33' instead of 'eth0'
-#MASTER_SERVER_IP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
-MASTER_SERVER_IP="192.168.0.17"
+MASTER_SERVER_IP=`ip addr show eth0 | grep -Po 'inet \K[\d.]+'`
+#MASTER_SERVER_IP="192.168.0.17"
 MASTER_SERVER_PORT="6443"
 
 CA_CRT_PATH="/etc/kubernetes/pki/ca.crt"
