@@ -115,4 +115,5 @@ echo "[*] Trying: \"kubectl get pods --context=$CONTEXT_NAME\""
 kubectl get pods --context=$CONTEXT_NAME
 
 echo "[*] Trying: \"curl -k -v -H \"Authorization: Bearer $TOKEN\" https://127.0.0.1:6443/api/v1/namespaces/default/pods\""
+# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#list-62
 curl -k -v -H "Authorization: Bearer $TOKEN" https://127.0.0.1:6443/api/v1/namespaces/default/pods
