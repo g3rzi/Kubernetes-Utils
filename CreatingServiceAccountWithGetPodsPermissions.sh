@@ -1,4 +1,3 @@
-# Commands used in https://labs.play-with-k8s.com/
 # kubeadm init --apiserver-advertise-address $(hostname -i)
 #  mkdir -p $HOME/.kube
 #  cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -9,8 +8,17 @@
 SERVICE_ACCOUNT_NAME="myservice3"
 USER_NAME="myservice3-user"
 CONTEXT_NAME="myservice3-context"
+ROLE_NAME="my-role"
+ROLE_BINDING_NAME="my-role-binding"
 
-if [ ! -d "~/tmp" ]; then
+# Clean all
+# kubectl delete serviceaccount $SERVICE_ACCOUNT_NAME
+# kubectl delete role $ROLE_NAME
+# kubectl delete rolebindings $ROLE_BINDING_NAME
+# kubectl config delete-context $CONTEXT_NAME
+# kubectl config unset "users.$USER_NAME"
+
+if [ ! -d ~/tmp ]; then
 	echo "[*] Creating ~/tmp folder"
 	mkdir ~/tmp
 fi
@@ -24,7 +32,16 @@ kind: ServiceAccount
 metadata:
   name: $SERVICE_ACCOUNT_NAME
 EOF
-kubectl create -f ~/tmp/serviceaccount.yaml
+
+IS_EXIST=`kubectl get serviceaccounts $SERVICE_ACCOUNT_NAME`
+if [ "$IS_EXIST" == "" ]; then
+	echo "[*] Wasn't exist... creating now..."
+	kubectl create -f ~/tmp/serviceaccount.yaml
+
+else
+	echo "[*] ServiceAccount already exist, applying changes"
+	kubectl apply -f ~/tmp/serviceaccount.yaml
+fi
 
 # Role.yaml
 echo "[*] Creating role"
@@ -34,13 +51,22 @@ kind: Role
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata: 
   namespace: default
-  name: my-role
+  name: $ROLE_NAME
 rules: 
 - apiGroups: ["", "extensions", "apps"]
   resources: ["pods"]
   verbs: ["get", "list"] 
 EOF
-kubectl create -f ~/tmp/Role.yaml
+
+IS_EXIST=`kubectl get role $ROLE_NAME`
+if [ "$IS_EXIST" == "" ]; then
+	echo "[*] Wasn't exist... creating now..."
+	kubectl create -f ~/tmp/Role.yaml
+
+else
+	echo "[*] Role already exist, applying changes"
+	kubectl apply -f ~/tmp/Role.yaml
+fi
 
 # RoleBinding.yaml
 echo "[*] Creating role binding"
@@ -49,7 +75,7 @@ cat > ~/tmp/RoleBinding.yaml <<EOF
 kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata: 
-  name: my-role-binding
+  name: $ROLE_BINDING_NAME
   namespace: default
 subjects: 
 - kind: ServiceAccount 
@@ -58,10 +84,19 @@ subjects:
   apiGroup: ""
 roleRef: 
   kind: Role
-  name: my-role
+  name: $ROLE_NAME
   apiGroup: ""
 EOF
-kubectl create -f ~/tmp/RoleBinding.yaml
+
+IS_EXIST=`kubectl get rolebindings $ROLE_BINDING_NAME`
+if [ "$IS_EXIST" == "" ]; then
+	echo "[*] Wasn't exist... creating now..."
+	kubectl create -f ~/tmp/RoleBinding.yaml
+
+else
+	echo "[*] RoleBinding already exist, applying changes"
+	kubectl apply -f ~/tmp/RoleBinding.yaml
+fi
 
 SECRET_NAME=`kubectl get serviceaccounts $SERVICE_ACCOUNT_NAME -o json | jq -r '.secrets[].name'`
 TOKEN=`kubectl get secrets $SECRET_NAME -o json | jq -r '.data | .token' | base64 -d`
@@ -79,6 +114,5 @@ kubectl config set-context $CONTEXT_NAME \
 echo "[*] Trying: \"kubectl get pods --context=$CONTEXT_NAME\""
 kubectl get pods --context=$CONTEXT_NAME
 
-# https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.10/#list-62
 echo "[*] Trying: \"curl -k -v -H \"Authorization: Bearer $TOKEN\" https://127.0.0.1:6443/api/v1/namespaces/default/pods\""
 curl -k -v -H "Authorization: Bearer $TOKEN" https://127.0.0.1:6443/api/v1/namespaces/default/pods
